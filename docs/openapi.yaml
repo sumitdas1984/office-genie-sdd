@@ -1,0 +1,348 @@
+openapi: 3.1.0
+info:
+  title: OfficeGenie API
+  description: AI-powered first-line triage system for employee support requests.
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+  /api/submit:
+    post:
+      tags:
+        - Requests
+      summary: Submit a new support request
+      description: >
+        Accepts a natural language support request from an employee.
+        Classifies the request (IT, HR, Payroll, Admin), extracts structured fields,
+        generates an acknowledgment response, and routes to the appropriate team.
+      operationId: submitRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitRequest"
+            example:
+              employee_id: "EMP-0042"
+              employee_name: "Ananya Sharma"
+              employee_email: "ananya.sharma@company.com"
+              department: "Engineering"
+              message: "I can't access my payslip for June. It shows 'file not found'. Please help."
+      responses:
+        "200":
+          description: Request successfully submitted and classified.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitResponse"
+              example:
+                request_id: "REQ-2024-0158"
+                status: "acknowledged"
+                category: "Payroll"
+                subcategory: "Payslip Access"
+                extracted_fields:
+                  month: "June"
+                  error_message: "file not found"
+                suggested_response: "Hi Ananya, we've shared your payslip issue with the Payroll team. You'll get an update shortly."
+                routed_to: "payroll-team"
+                created_at: "2024-06-15T10:32:00Z"
+
+  /api/requests/{request_id}:
+    get:
+      tags:
+        - Requests
+      summary: Retrieve a specific request
+      description: Fetch the full details and current status of a single request by its ID.
+      operationId: getRequest
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          description: The unique request identifier (e.g. REQ-2024-0158)
+          schema:
+            type: string
+            example: "REQ-2024-0158"
+      responses:
+        "200":
+          description: Request found and returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestDetail"
+        "404":
+          description: Request not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                detail: "Request 'REQ-2024-9999' not found"
+
+  /api/requests:
+    get:
+      tags:
+        - Requests
+      summary: List all requests
+      description: Returns a list of submitted requests, optionally filtered by category and limited in count.
+      operationId: listRequests
+      parameters:
+        - name: category
+          in: query
+          required: false
+          description: Filter requests by category (IT, HR, Payroll, Admin)
+          schema:
+            type: string
+            enum: [IT, HR, Payroll, Admin]
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of records to return (ordered by most recent first)
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: List of requests.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RequestDetail"
+
+  /api/requests/{request_id}/status:
+    patch:
+      tags:
+        - Requests
+      summary: Update request status
+      description: Updates the workflow status of an existing request.
+      operationId: updateStatus
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          description: The unique request identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  description: New status value
+                  example: "resolved"
+                  enum: [acknowledged, in-progress, resolved, closed]
+      responses:
+        "200":
+          description: Status updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestDetail"
+        "404":
+          description: Request not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "400":
+          description: Invalid status value.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/analytics/summary:
+    get:
+      tags:
+        - Analytics
+      summary: Retrieve analytics summary
+      description: Returns aggregated statistics across all submitted requests.
+      operationId: getAnalyticsSummary
+      responses:
+        "200":
+          description: Analytics data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsSummary"
+              example:
+                total_requests: 1247
+                by_category:
+                  IT: 523
+                  HR: 312
+                  Payroll: 287
+                  Admin: 125
+                avg_response_time_seconds: 4.2
+                top_subcategories:
+                  - subcategory: "Access / Permissions"
+                    count: 214
+                  - subcategory: "Payslip Access"
+                    count: 187
+                  - subcategory: "Leave"
+                    count: 156
+                  - subcategory: "Password Reset"
+                    count: 134
+                  - subcategory: "Software Install"
+                    count: 98
+
+components:
+  schemas:
+    SubmitRequest:
+      type: object
+      required: [employee_id, employee_name, employee_email, department, message]
+      properties:
+        employee_id:
+          type: string
+          description: Unique employee identifier
+          example: "EMP-0042"
+        employee_name:
+          type: string
+          description: Full name of the employee
+          example: "Ananya Sharma"
+        employee_email:
+          type: string
+          format: email
+          description: Employee email address
+          example: "ananya.sharma@company.com"
+        department:
+          type: string
+          description: Employee's department
+          example: "Engineering"
+        message:
+          type: string
+          description: Natural language description of the support request
+          example: "I can't access my payslip for June. It shows 'file not found'. Please help."
+
+    SubmitResponse:
+      type: object
+      required: [request_id, status, category, subcategory, extracted_fields, suggested_response, routed_to, created_at]
+      properties:
+        request_id:
+          type: string
+          description: System-generated unique request ID
+          example: "REQ-2024-0158"
+        status:
+          type: string
+          description: Current workflow status
+          example: "acknowledged"
+        category:
+          type: string
+          description: High-level classification (IT, HR, Payroll, Admin)
+          example: "Payroll"
+        subcategory:
+          type: string
+          description: Specific issue type within the category
+          example: "Payslip Access"
+        extracted_fields:
+          type: object
+          description: Structured fields extracted from the message
+          additionalProperties: true
+          example:
+            month: "June"
+            error_message: "file not found"
+        suggested_response:
+          type: string
+          description: AI-generated acknowledgment message for the employee
+          example: "Hi Ananya, we've shared your payslip issue with the Payroll team. You'll get an update shortly."
+        routed_to:
+          type: string
+          description: Target department queue or automation identifier
+          example: "payroll-team"
+        created_at:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of request creation
+          example: "2024-06-15T10:32:00Z"
+
+    RequestDetail:
+      type: object
+      required: [request_id, employee_id, employee_name, department, message, category, subcategory, extracted_fields, suggested_response, routed_to, status, created_at]
+      properties:
+        request_id:
+          type: string
+          example: "REQ-2024-0158"
+        employee_id:
+          type: string
+          example: "EMP-0042"
+        employee_name:
+          type: string
+          example: "Ananya Sharma"
+        department:
+          type: string
+          example: "Engineering"
+        message:
+          type: string
+          example: "I can't access my payslip for June. It shows 'file not found'. Please help."
+        category:
+          type: string
+          example: "Payroll"
+        subcategory:
+          type: string
+          example: "Payslip Access"
+        extracted_fields:
+          type: object
+          additionalProperties: true
+        suggested_response:
+          type: string
+        routed_to:
+          type: string
+          example: "payroll-team"
+        status:
+          type: string
+          enum: [acknowledged, in-progress, resolved, closed]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AnalyticsSummary:
+      type: object
+      required: [total_requests, by_category, avg_response_time_seconds, top_subcategories]
+      properties:
+        total_requests:
+          type: integer
+          example: 1247
+        by_category:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            IT: 523
+            HR: 312
+            Payroll: 287
+            Admin: 125
+        avg_response_time_seconds:
+          type: number
+          example: 4.2
+        top_subcategories:
+          type: array
+          items:
+            type: object
+            required: [subcategory, count]
+            properties:
+              subcategory:
+                type: string
+              count:
+                type: integer
+
+    Error:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+          example: "Request 'REQ-2024-0158' not found"
