@@ -2,135 +2,496 @@
 name: generate-features
 description: >
   Use this skill whenever the user wants to generate a feature backlog, write GitHub Issues,
-  decompose a product overview into specs, or create a tasks/backlog.md from a product document.
-  Trigger on phrases like "generate features", "create backlog", "break down my product doc",
-  "write feature specs", "generate GitHub issues from my overview", or "turn my PRD into tasks".
-  Also use when the user mentions Specification-Driven Development (SDD), wants to prepare work
-  items for engineering agents, or asks to decompose any product/requirements document into
-  structured, testable feature definitions.
+  decompose a product overview into feature specifications, or create a backlog.md from a
+  product/architecture document.
+
+  Trigger on phrases like:
+  "generate features",
+  "create backlog",
+  "break down my product doc",
+  "generate GitHub issues",
+  "turn my PRD into backlog",
+  "generate SDD features",
+  "prepare features for create-stories",
+  "create epic backlog",
+  or "decompose this design into features".
+
+  Also use whenever the user mentions:
+  - Specification-Driven Development (SDD)
+  - engineering planning
+  - autonomous development pipelines
+  - GitHub feature generation
+  - Feature/Epic creation
+  - backlog generation for engineering agents
+
 version: 1.0.0
 ---
 
-# Generate Features (SDD Backlog Generator)
+# Generate Features (Feature/Epic Backlog Generator)
 
-Transforms a product overview document into an exhaustive, structured feature backlog formatted
-as GitHub Issues in `tasks/backlog.md`. This skill operates as a Systems Architect + Product Owner
-subagent — it defines crisp execution parameters and data contracts, but does NOT write application
-code or unit tests.
+Transforms a product overview, architecture document, or design specification into a
+structured Feature/Epic backlog formatted as GitHub Issues in `backlog.md`.
 
----
+This skill operates as a:
 
-## Inputs
+- Systems Architect
+- Product Owner
+- Technical Planner
 
-| Input | Description |
-|-------|-------------|
-| `product_doc` | Path to the product overview markdown (e.g. `docs/product-overview.md`). Must contain at minimum: **Overview**, **Core Features**, and **Tech Stack** sections. |
+It defines:
 
----
+- capability boundaries
+- execution scope
+- integrations
+- operational requirements
+- measurable outcomes
 
-## Execution Pipeline
+but does NOT:
 
-### Step 1 — Input Discovery
+- write implementation code
+- write unit tests
+- create implementation tasks
+- generate class-level or file-level work items.
 
-Read the product scoping document at `{{product_doc}}` to establish full functional context.
+The generated backlog MUST be optimized for:
 
-- If the file is **missing or lacks clear functional parameters**, halt and report a detailed
-  input validation error to the user. Do not proceed with incomplete input.
-- Also check for `docs/openapi.yaml` in the same directory. If it exists, read it to understand
-  the already-specified API surface — **extend it, don't redo it**.
-
-### Step 2 — Architectural Decomposition
-
-Deconstruct the product overview into **atomic, independent features**.
-
-- Decouple frontend presentation layers and backend analytical schemas into separate tracking blocks.
-- For each feature, define tight technical boundaries: what inputs must yield what specific outputs.
-- Sort by priority: **Must Have → Should Have → Nice to Have** (see Priority table below).
-- Always include at least one feature covering: structured error handling, input validation,
-  request logging/tracing, and observability.
-
-### Step 3 — Write `{{product_doc_directory}}/backlog.md`
-
-Compile all features into a single file at `{{product_doc_directory}}/backlog.md` (in the same directory as the input product document).
-
-Every feature **must** use the GitHub Issue template below. Do not abbreviate, omit sections,
-or leave placeholder comments like `<!-- Add details later -->`.
-
----
-
-## GitHub Issue Template
-
-Use this exact schema for every feature:
-
-~~~markdown
-## 📋 FEATURE-[ID]: [Short, Actionable Feature Name]
-
-### 1. User Story / Objective
-- **As a:** [User Persona or Core System Component]
-- **I want to:** [Clear statement of functional intent]
-- **So that:** [The engineering value or business outcome]
-
-### 2. Functional Description
-[2-3 sentence overview of the feature's behavior and user interaction loop.
-Focus on WHAT the system does — no implementation or internal code specifics.]
-
-### 3. Technical Data Contract & Boundaries
-* **Trigger/Input Conditions:**
-  - `Parameter`: [Data Type & Limits] - [Constraint Description]
-* **Expected Output/Response:**
-  - `Return Payload`: [Data Type or Pydantic Structure]
-  - `Expected Schema`: [Literal JSON representation of fields]
-* **Error Handling States:**
-  - If [Input condition fails] -> Throw [Specific Exception or HTTP Status Code]
-  - If [System failure] -> Catch cleanly, log data, and return [Graceful Fallback State]
-
-### 4. Behavioral & Execution Workflow
 ```text
-[Input Triggered] ───> [Schema Validation] ───> [Core Logic Execution] ───> [Output Rendered]
+Feature/Epic
+    ↓
+create-stories
+    ↓
+implementation stories
+    ↓
+engineering execution
 ```
 
-### 5. Binary Acceptance Criteria (QA Guardrails)
-- [ ] AC-1 (Happy Path): [Explicitly testable assertion]
-- [ ] AC-2 (Edge Case - Null/Empty): [Explicitly testable assertion]
-- [ ] AC-3 (Input Normalization): [Explicitly testable assertion]
-- [ ] AC-4 (Boundary Constraint): [Explicitly testable assertion]
+NOT:
 
-### 🛠️ Downstream Implementation Tasks
-- [ ] Define data validation schemas (Pydantic / Frontend Models).
-- [ ] Implement core business logic and matching calculations.
-- [ ] Expose endpoint/interface bindings.
+```text
+feature
+    ↓
+direct coding
+```
+
+---
+
+# Inputs
+
+| Input | Description |
+|---|---|
+| product_doc | Path to product overview / HLD / LLD / PRD |
+
+Required sections:
+
+- Overview
+- Core Features or Functional Scope
+- Architecture or Tech Stack
+
+Optional:
+
+- OpenAPI
+- Data model
+- Workflow diagrams
+- UI specification
+
+---
+
+# Core Backlog Philosophy
+
+The purpose of this skill is to generate:
+
+# Feature/Epic backlog
+
+NOT:
+
+- implementation tasks
+- coding checklist
+- helper-level work items
+- endpoint-only stories
+- developer TODOs
+
+Generated backlog items should represent:
+
+> cohesive platform capabilities
+
+that are valuable and independently understandable.
+
+Each generated item should typically be:
+
+- decomposable into 3–8 implementation stories
+- independently reviewable
+- architecture-aware
+- suitable for create-stories style decomposition.
+
+---
+
+# Feature Sizing Model
+
+Use the following sizing guidance.
+
+## DO Generate
+
+### Small Feature
+
+Usually:
+
+- 2–3 coordinated components
+- clear capability boundary
+- likely 2–4 stories
+
+Examples:
+
+- LLM Classification Engine
+- Request Retrieval API
+- Status Workflow
+
+### Feature
+
+Preferred default.
+
+Usually:
+
+- multiple modules
+- integration points
+- resilience/monitoring/configuration
+- 3–6 stories
+
+Examples:
+
+- Persistence Layer
+- Logging & Tracing
+- Submission Experience
+
+### Epic
+
+Use when:
+
+- cross-cutting
+- multiple subsystems
+- backend + frontend
+- broad capability
+
+Usually:
+
+- 5–10 stories
+
+Examples:
+
+- Dashboard Experience
+- Analytics Platform
+- Identity & Access Management
+
+---
+
+## DO NOT Generate
+
+Avoid generating top-level backlog items that are:
+
+### Story-sized
+
+Reject:
+
+- helper utilities
+- validators
+- retry helpers
+- single middleware
+- single parser
+- class-level work
+- isolated endpoint implementation
+- file-level tasks
+
+These belong inside create-stories output.
+
+---
+
+# Execution Pipeline
+
+## Step 1 — Input Discovery
+
+Read:
+
+`{{product_doc}}`
+
+Establish:
+
+- product goals
+- workflows
+- actors
+- integrations
+- architecture
+- non-functional requirements
+
+If missing or incomplete:
+
+HALT.
+
+Return:
+
+- missing sections
+- clarification request
+- validation error.
+
+Also inspect:
+
+```text
+docs/openapi.yaml
+```
+
+if present.
+
+Use it to:
+
+- understand existing APIs
+- extend
+- avoid duplication.
+
+---
+
+## Step 2 — Capability Mapping
+
+Identify:
+
+- major business capabilities
+- architectural subsystems
+- user journeys
+- platform services
+- operational concerns
+- resilience requirements
+- observability requirements
+
+Build:
+
+```text
+Product
+    ↓
+Capabilities
+    ↓
+Feature/Epic backlog
+```
+
+NOT:
+
+```text
+Product
+    ↓
+implementation checklist
+```
+
+---
+
+## Step 3 — Feature/Epic Decomposition
+
+Decompose into:
+
+cohesive capabilities.
+
+Each feature should:
+
+- solve a recognizable problem
+- own a capability boundary
+- include operational requirements
+- define integrations
+- define resilience expectations
+- be independently meaningful.
+
+Prefer:
+
+vertical capability slicing.
+
+Example:
+
+Prefer:
+
+```text
+Request Intake Pipeline
+```
+
+over:
+
+```text
+validation
+parser
+serializer
+```
+
+when these form one user-visible capability.
+
+Cross-cutting concerns should become Features:
+
+Examples:
+
+- Logging & Tracing
+- Reliability
+- Observability
+- Analytics
+
+---
+
+# create-stories Readiness Test
+
+Before emitting a feature:
+
+ask:
+
+> Could this reasonably decompose into 3–8 implementation stories?
+
+If:
+
+NO
+
+then it is likely:
+
+story-sized
+
+and should be merged or elevated.
+
+---
+
+# Priority Ordering
+
+Sort:
+
+1. Must Have
+2. Should Have
+3. Nice To Have
+
+Use:
+
+Business criticality
++
+dependency ordering
++
+ platform enablement.
+
+Core platform capabilities usually precede UI polish.
+
+---
+
+# Mandatory Platform Features
+
+Always ensure backlog includes coverage for:
+
+- validation
+- resilience
+- logging/tracing
+- observability
+- configuration
+- failure handling
+- operational readiness
+
+These may be standalone Features or embedded into broader platform Features.
+
+---
+
+# Output Generation
+
+Write:
+
+```text
+{{product_doc_directory}}/backlog.md
+```
+
+All items must use the Feature template.
+
+Do NOT:
+
+- add TODO comments
+- leave placeholders
+- omit sections.
+
+---
+
+# GitHub Feature Template
+
+Use exact template:
+
+~~~markdown
+## 📋 FEATURE-[ID]: [Capability-Oriented Feature Name]
+
+### Description
+Explain:
+
+- capability
+- business value
+- problem solved
+- desired outcome
+
+---
+
+### Scope
+
+Define:
+
+- Core Implementation
+- Integration Points
+- Configuration & Management
+- Security & Governance
+- Performance & Monitoring
+- Developer Experience
+- Data Handling
+- Error Handling & Resilience
+
+Scope should define:
+
+capability boundaries
+
+NOT:
+
+implementation tasks.
+
+---
+
+### Acceptance Criteria
+
+Only include:
+
+- measurable
+- system-level
+- independently testable outcomes
+
+Avoid:
+
+implementation instructions.
+
+Use:
+
+- functionality
+- performance
+- resilience
+- monitoring
+- governance
+- logging
+- operational expectations
+- developer usability
+
+Target:
+
+95%+ coverage expectation.
+
 ~~~
 
 ---
 
-## Priority Reference
+# Final Quality Gate
 
-| Priority | Meaning |
-|----------|---------|
-| **Must Have** | Blocking — system cannot function safely or correctly without it |
-| **Should Have** | Improves correctness or UX meaningfully but has workarounds |
-| **Nice to Have** | Polish or advanced capabilities |
+Validate backlog before writing.
 
----
+Reject and revise if:
 
-## Strict Output Guardrails
+- more than 40% of items are story-sized
+- items are implementation-task oriented
+- backlog reads like TODO list
+- capabilities are fragmented
+- create-stories decomposition would add little value.
 
-- **Binary ACs only.** Every Acceptance Criterion must be an explicitly testable assertion.
-  Never use vague words like "user-friendly", "performant", or "optimized".
-  ✅ Good: "Verify that execution returns HTTP 422 if text exceeds 5,000 characters"
-  ❌ Bad: "Ensure the response is fast and user-friendly"
+Target outcome:
 
-- **No implementation bias.** Do not write code loops or instruct developers on how to implement.
-  Restrict content to data boundaries, validation states, and output expectations.
-
-- **No duplication.** Do not re-document features already fully specified in the OpenAPI spec.
-
-- **No tech stack violations.** Do not suggest features that contradict the defined tech stack.
-
-- **MVP focus.** Resist feature bloat. Features must be practical and prioritized.
-
----
-
-## Output
-
-Write the complete feature backlog to `{{product_doc_directory}}/backlog.md`.
+```text
+Feature/Epic backlog
+    ↓
+create-stories
+    ↓
+story backlog
+    ↓
+implementation
+```
