@@ -1,0 +1,1 @@
+agent: .claude/agents/update-knowledge.md
