@@ -34,3 +34,48 @@ def test_submit_invalid_email():
         "message": "Test",
     })
     assert response.status_code == 422
+
+
+def test_submit_response_has_all_required_fields():
+    """Verify the response contains all required fields."""
+    response = client.post("/api/submit", json={
+        "employee_id": "EMP-0042",
+        "employee_name": "Ananya Sharma",
+        "employee_email": "ananya.sharma@company.com",
+        "department": "Engineering",
+        "message": "I can't access my payslip for June.",
+    })
+    assert response.status_code == 200
+    data = response.json()
+    required_fields = ["request_id", "status", "category", "subcategory",
+                      "extracted_fields", "suggested_response", "routed_to", "created_at"]
+    for field in required_fields:
+        assert field in data, f"Missing field: {field}"
+
+
+def test_request_id_uniqueness():
+    """Verify that each request gets a unique ID."""
+    ids = set()
+    for _ in range(5):
+        response = client.post("/api/submit", json={
+            "employee_id": "EMP-0042",
+            "employee_name": "Ananya Sharma",
+            "employee_email": "ananya.sharma@company.com",
+            "department": "Engineering",
+            "message": "Test",
+        })
+        assert response.status_code == 200
+        ids.add(response.json()["request_id"])
+    assert len(ids) == 5, "Request IDs must be unique"
+
+
+def test_empty_message_rejected():
+    """Empty message string returns 422."""
+    response = client.post("/api/submit", json={
+        "employee_id": "EMP-0042",
+        "employee_name": "Ananya Sharma",
+        "employee_email": "ananya.sharma@company.com",
+        "department": "Engineering",
+        "message": "",
+    })
+    assert response.status_code == 422
