@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -18,8 +19,11 @@ class ExtractedFields(BaseModel):
 
 
 class SubmitRequest(BaseModel):
-    text: str = Field(..., min_length=1)
-    email: Optional[EmailStr] = None
+    employee_id: str = Field(..., min_length=1)
+    employee_name: str = Field(..., min_length=1)
+    employee_email: EmailStr
+    department: str = Field(..., min_length=1)
+    message: str = Field(..., min_length=1)
 
 
 class ClassificationResponse(BaseModel):
@@ -41,7 +45,12 @@ class RequestStatus(str, Enum):
 class SubmitResponse(BaseModel):
     request_id: str
     status: RequestStatus
-    classification: ClassificationResponse
+    category: CategoryEnum
+    subcategory: str
+    extracted_fields: ExtractedFields
+    suggested_response: str
+    routed_to: str
+    created_at: datetime
 
 
 class RequestStatusUpdate(BaseModel):
