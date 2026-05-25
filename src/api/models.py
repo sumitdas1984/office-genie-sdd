@@ -23,7 +23,7 @@ class SubmitRequest(BaseModel):
     employee_name: str = Field(..., min_length=1)
     employee_email: EmailStr
     department: str = Field(..., min_length=1)
-    message: str = Field(..., min_length=1)
+    message: str = Field(..., min_length=1, max_length=5000)
 
 
 class ClassificationResponse(BaseModel):
