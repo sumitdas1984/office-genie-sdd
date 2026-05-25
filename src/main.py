@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from src.api.routes import router as api_router
+from src.middleware.logging import RequestIDMiddleware
 
 app = FastAPI(
     title="OfficeGenie API",
@@ -8,6 +9,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
+app.add_middleware(RequestIDMiddleware)
 app.include_router(api_router)
 
 
