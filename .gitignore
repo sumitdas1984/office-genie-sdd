@@ -10,5 +10,5 @@ wheels/
 .venv
 
 # Claude plans (local planning artifacts)
-.claude/plans/
+# .claude/plans/
 .claude/settings.local.json
