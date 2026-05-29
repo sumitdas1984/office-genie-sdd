@@ -30,3 +30,40 @@ class TestExtractedFields:
         assert f.system_name is None
         assert f.urgency == "medium"
         assert f.error_message is None
+
+
+class TestSubmitRequestValidation:
+    def test_valid_request(self):
+        from src.api.models import SubmitRequest
+        r = SubmitRequest(
+            employee_id="EMP-001",
+            employee_name="John Doe",
+            employee_email="john@company.com",
+            department="Engineering",
+            message="My printer is broken",
+        )
+        assert r.employee_id == "EMP-001"
+
+    def test_rejects_invalid_email(self):
+        from src.api.models import SubmitRequest
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            SubmitRequest(
+                employee_id="EMP-001",
+                employee_name="John Doe",
+                employee_email="not-an-email",
+                department="Engineering",
+                message="My printer is broken",
+            )
+
+    def test_rejects_empty_message(self):
+        from src.api.models import SubmitRequest
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            SubmitRequest(
+                employee_id="EMP-001",
+                employee_name="John Doe",
+                employee_email="john@company.com",
+                department="Engineering",
+                message="",
+            )
