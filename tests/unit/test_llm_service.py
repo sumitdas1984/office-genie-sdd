@@ -1,4 +1,5 @@
 import os
+import json
 from unittest.mock import patch, MagicMock
 
 # Set API key before importing the module
