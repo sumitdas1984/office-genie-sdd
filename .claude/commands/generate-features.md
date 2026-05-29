@@ -1,1 +1,0 @@
-agent: .claude/agents/generate-features.md
