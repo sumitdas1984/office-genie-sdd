@@ -12,8 +12,9 @@ from src.api.models import (
     SubmitResponse,
 )
 from src.middleware.logging import get_request_id
+from src.services.config import ConfigError
 from src.services.id_generator import generate_request_id
-from src.services.llm_service import classify_request
+from src.services.llm_service import classify_request, classify_request_fallback
 from src.services.routing_service import route_request
 
 router = APIRouter()
@@ -33,11 +34,26 @@ def submit_request(request: SubmitRequest, response: Response) -> SubmitResponse
         },
     )
 
-    llm_result = classify_request(
-        message=request.message,
-        employee_id=request.employee_id,
-        department=request.department,
-    )
+    try:
+        llm_result = classify_request(
+            message=request.message,
+            employee_id=request.employee_id,
+            department=request.department,
+        )
+    except ConfigError:
+        logger.warning(f"OpenAI API key not configured, using fallback classification")
+        llm_result = classify_request_fallback(
+            message=request.message,
+            employee_id=request.employee_id,
+            department=request.department,
+        )
+    except Exception as e:
+        logger.warning(f"LLM classification failed: {e}, using fallback")
+        llm_result = classify_request_fallback(
+            message=request.message,
+            employee_id=request.employee_id,
+            department=request.department,
+        )
 
     routing_target = route_request(
         category=llm_result["category"],
