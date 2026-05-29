@@ -7,24 +7,23 @@ This project uses a Specification-Driven Development (SDD) pipeline powered by C
 ## Pipeline Architecture
 
 ```
-/generate-features  →  /parse-requirement  →  /create-stories  →  /implement × N  →  /update-knowledge  →  /create-pr
-    (entry)              (classify)            (decompose)          (build)              (docs)             (package)
+/create-features  →  /parse-requirement  →  /create-stories  →  /implement × N  →  /update-knowledge  →  /create-pr
+     (entry)              (classify)            (decompose)          (build)              (docs)             (package)
 ```
 
 ---
 
-## Step 1: Generate Features — `/generate-features`
+## Step 1: Create Features — `/create-features`
 
-**Agent:** `.claude/agents/generate-features.md`
+**Agent:** `.claude/agents/create-features.md`
 
-**Trigger:** `/generate-features <product_doc_path>`
+**Trigger:** `/create-features <product_doc_path>`
 
 **What it does:**
 - Reads the product document (PRD, HLD, architecture spec)
 - Maps business capabilities and subsystems
 - Decomposes into Feature/Epic backlog items (3–8 stories each)
-- Writes `docs/backlog.md`
-- Can optionally create GitHub issues via `mcp__github__issue_write`
+- Creates GitHub issues directly via `mcp__github__issue_write`
 
 **When to use:** Entry point — when you have a new product overview or PRD to turn into features.
 
@@ -165,10 +164,9 @@ feature/FEATURE-00X  — feature branches (one per feature)
    git checkout -b feature/FEATURE-002 develop
 
 3. Do ALL work on this branch:
-   /parse-requirement 16
-   /create-stories 16
-   /implement-feature 30
-   /implement-feature 31
+   /parse-requirement <feature_issue_number>
+   /create-stories <feature_issue_number>
+   /implement-feature <story_number>
    ... (all stories)
 
 4. Update docs and create PR:
@@ -236,7 +234,7 @@ agent: .claude/agents/<agent-name>.md
 ### Commands Available
 | Command | Agent |
 |---------|-------|
-| `/generate-features` | generate-features.md |
+| `/create-features` | create-features.md |
 | `/parse-requirement` | parse-requirement.md |
 | `/create-stories` | create-stories.md |
 | `/implement-feature` | implement-feature.md |
@@ -255,39 +253,36 @@ agent: .claude/agents/<agent-name>.md
 git checkout develop && git pull origin develop
 git checkout -b feature/FEATURE-001 develop
 
-# 2. Generate feature from product doc (if starting from PRD)
-# /generate-features docs/product-overview.md
+# 2. Create features from product docs
+/create-features docs/product-overview.md docs/architecture.md
+# → Created issues #36–#43
 
 # 3. Parse the feature issue
-/parse-requirement 15
+/parse-requirement 36
 
-# 3. Decompose into stories
-/create-stories 15
-# → Created stories #23, #24, #25, #26, #27, #28
+# 4. Decompose into stories
+/create-stories 36
+# → Created story sub-issues linked to #36
 
-# 4. Implement each story
-/implement-feature 23   # Story 1: Scaffold
-/implement-feature 24   # Story 2: API Models
-/implement-feature 25   # Story 3: POST /api/submit
-/implement-feature 26   # Story 4: Request-ID Middleware
-/implement-feature 27   # Story 5: Error Handling
-/implement-feature 28   # Story 6: Integration Tests
+# 5. Implement each story
+/implement-feature <story_number>
+# ... (repeat for all stories)
 
-# 5. Update documentation
+# 6. Update documentation
 /update-knowledge
 
-# 6. Create PR
+# 7. Create PR
 /create-pr
-# → PR #29 created targeting develop
+# → PR created targeting develop
 
-# 7. Review
+# 8. Review
 /review
 # → Code review posted, bugs fixed
 
-# 8. Merge
-# → PR #29 merged to develop on GitHub
+# 9. Merge
+# → PR merged to develop on GitHub
 
-# 9. Sync develop
+# 10. Sync develop
 git checkout develop && git pull origin develop
 ```
 
