@@ -7,12 +7,30 @@ This project uses a Specification-Driven Development (SDD) pipeline powered by C
 ## Pipeline Architecture
 
 ```
-Issue #N  →  /parse  →  /create-stories  →  /implement × N  →  /update-knowledge  →  /create-pr  →  Merge to develop
+/generate-features  →  /parse-requirement  →  /create-stories  →  /implement × N  →  /update-knowledge  →  /create-pr
+    (entry)              (classify)            (decompose)          (build)              (docs)             (package)
 ```
 
 ---
 
-## Step 1: Parse Requirement — `/parse-requirement`
+## Step 1: Generate Features — `/generate-features`
+
+**Agent:** `.claude/agents/generate-features.md`
+
+**Trigger:** `/generate-features <product_doc_path>`
+
+**What it does:**
+- Reads the product document (PRD, HLD, architecture spec)
+- Maps business capabilities and subsystems
+- Decomposes into Feature/Epic backlog items (3–8 stories each)
+- Writes `docs/backlog.md`
+- Can optionally create GitHub issues via `mcp__github__issue_write`
+
+**When to use:** Entry point — when you have a new product overview or PRD to turn into features.
+
+---
+
+## Step 2: Parse Requirement — `/parse-requirement`
 
 **Agent:** `.claude/agents/parse-requirement.md`
 
@@ -218,6 +236,7 @@ agent: .claude/agents/<agent-name>.md
 ### Commands Available
 | Command | Agent |
 |---------|-------|
+| `/generate-features` | generate-features.md |
 | `/parse-requirement` | parse-requirement.md |
 | `/create-stories` | create-stories.md |
 | `/implement-feature` | implement-feature.md |
@@ -236,7 +255,10 @@ agent: .claude/agents/<agent-name>.md
 git checkout develop && git pull origin develop
 git checkout -b feature/FEATURE-001 develop
 
-# 2. Parse the feature issue
+# 2. Generate feature from product doc (if starting from PRD)
+# /generate-features docs/product-overview.md
+
+# 3. Parse the feature issue
 /parse-requirement 15
 
 # 3. Decompose into stories
