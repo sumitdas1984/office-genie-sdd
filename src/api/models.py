@@ -10,6 +10,7 @@ class CategoryEnum(str, Enum):
     HR = "HR"
     Payroll = "Payroll"
     Admin = "Admin"
+    UNKNOWN = "Unknown"
 
 
 class RequestStatus(str, Enum):
