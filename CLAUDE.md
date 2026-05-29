@@ -23,14 +23,17 @@ uv run pytest -v
 ### Processing Pipeline
 
 ```
-Employee Input → FastAPI → Pydantic Validation → LLM Classification → Routing Logic → SQLite Persistence → Acknowledgment Response
+Employee Input → FastAPI → Pydantic Validation → LLM Classification (stub) → Routing Logic (stub) → SQLite Persistence (stub) → Acknowledgment Response
 ```
+
+Current implementation uses stub services. Full LLM classification, routing, and persistence come in FEATURE-002/003/004.
 
 ### Backend Structure (`src/`)
 
 - `api/` — FastAPI routes, Pydantic request/response models, exception handlers
 - `db/` — SQLite schema and connection management
-- `services/` — Business logic: llm_service, routing_service, persistence_service, analytics_service
+- `middleware/` — RequestIDMiddleware, JSONLogHandler for structured logging
+- `services/` — Business logic: llm_service, routing_service, id_generator, persistence_service, analytics_service
 - `templates/` — Jinja2 prompt templates (e.g. `classification_prompt.j2`)
 
 ### Frontend Structure (`frontend/`)
@@ -50,7 +53,7 @@ Employee Input → FastAPI → Pydantic Validation → LLM Classification → Ro
 **LLM Response Schema** (from OpenAI, parsed into dict):
 ```json
 {
-  "category": "IT|HR|Payroll|Admin",
+  "category": "IT|HR|Payroll|Admin|Unknown",
   "subcategory": "string",
   "confidence": 0.0-1.0,
   "extracted_fields": { "date_mentioned": null, "system_name": null, "urgency": "low|medium|high", "error_message": null },
@@ -127,16 +130,17 @@ Write failing test  →  Run (verify FAIL)  →  Write implementation  →  Run 
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/submit` | Submit request, classify, route, return acknowledgment |
-| `GET` | `/api/requests/{request_id}` | Retrieve single request |
-| `GET` | `/api/requests` | List requests (filter by category, limit) |
-| `PATCH` | `/api/requests/{request_id}/status` | Update request status |
-| `GET` | `/api/analytics/summary` | Aggregated statistics |
+| `GET` | `/health` | Health check |
+| `POST` | `/api/submit` | Submit request, classify, route, return acknowledgment (stub) |
+| `GET` | `/api/requests/{request_id}` | Retrieve single request (stub) |
+| `GET` | `/api/requests` | List requests (filter by category, limit) (stub) |
+| `PATCH` | `/api/requests/{request_id}/status` | Update request status (stub) |
+| `GET` | `/api/analytics/summary` | Aggregated statistics (stub) |
 
 ## Constraints
 
 - **Python 3.13+**, **uv** for package management
-- Backend: FastAPI + Pydantic + SQLite + Jinja2 + OpenAI GPT
+- Backend: FastAPI + Pydantic v2 + SQLite + Jinja2 + OpenAI GPT (stub)
 - Frontend: Streamlit + Plotly
 - `OPENAI_API_KEY` required in environment (not hardcoded)
 - No external Redis or queue — analytics cache is in-memory with 60s TTL
