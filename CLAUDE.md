@@ -23,10 +23,10 @@ uv run pytest -v
 ### Processing Pipeline
 
 ```
-Employee Input → FastAPI → Pydantic Validation → LLM Classification (stub) → Routing Logic (stub) → SQLite Persistence (stub) → Acknowledgment Response
+Employee Input → FastAPI → Pydantic Validation → LLM Classification → Routing Logic → Acknowledgment Response
 ```
 
-Current implementation uses stub services. Full LLM classification, routing, and persistence come in FEATURE-002/003/004.
+Full implementation complete as of FEATURE-002.
 
 ### Backend Structure (`src/`)
 
@@ -84,9 +84,26 @@ Current implementation uses stub services. Full LLM classification, routing, and
 ### LLM Failure Handling
 
 - Retry with exponential backoff (1s, 2s, 4s), max 3 attempts
-- Auth errors (401) fail immediately without retry
-- On final failure: fallback response (`category=Unknown`, `subcategory=needs-review`, `confidence=0.0`) persisted for manual triage
+- Auth errors (401/403) fail immediately without retry
+- On final failure: fallback response (`category=Unknown`, `subcategory=needs-review`, `confidence=0.0`) returned for manual triage
 - HTTP 200 always returned to employee — never 500 for LLM failures
+
+### Services
+
+| Service | Description |
+|---------|-------------|
+| `llm_service.py` | LLM classification with OpenAI GPT, retry logic, Pydantic validation |
+| `routing_service.py` | Category/subcategory-based routing to team queues |
+| `id_generator.py` | Sequential `REQ-YYYY-NNNN` request ID generation |
+| `config.py` | `OPENAI_API_KEY` environment variable loading |
+
+### LLM Response Validation
+
+`LLMResponse` Pydantic model validates all LLM outputs:
+- `category`: enum (`IT`, `HR`, `Payroll`, `Admin`, `Unknown`)
+- `confidence`: float in range `[0.0, 1.0]`
+- `subcategory`, `suggested_response`, `routing_target`: strings with length constraints
+- `extracted_fields`: nested model with `date_mentioned`, `system_name`, `urgency`, `error_message`
 
 ### Structured Logging
 
@@ -140,7 +157,7 @@ Write failing test  →  Run (verify FAIL)  →  Write implementation  →  Run 
 ## Constraints
 
 - **Python 3.13+**, **uv** for package management
-- Backend: FastAPI + Pydantic v2 + SQLite + Jinja2 + OpenAI GPT (stub)
+- Backend: FastAPI + Pydantic v2 + SQLite + Jinja2 + OpenAI GPT
 - Frontend: Streamlit + Plotly
 - `OPENAI_API_KEY` required in environment (not hardcoded)
 - No external Redis or queue — analytics cache is in-memory with 60s TTL

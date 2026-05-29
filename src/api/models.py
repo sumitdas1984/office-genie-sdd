@@ -44,3 +44,12 @@ class SubmitResponse(BaseModel):
     suggested_response: str
     routed_to: str
     created_at: datetime
+
+
+class LLMResponse(BaseModel):
+    category: CategoryEnum
+    subcategory: str = Field(..., min_length=1, max_length=100)
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    extracted_fields: ExtractedFields
+    suggested_response: str = Field(..., min_length=1, max_length=1000)
+    routing_target: str = Field(..., min_length=1, max_length=100)
